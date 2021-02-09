@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nodsoft.YumeChan.NetRunner"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nodsoft.YumeChan.PluginBase", "src\Nodsoft.YumeChan.PluginBase\Nodsoft.YumeChan.PluginBase.csproj", "{BA3AB42C-6875-4F32-9476-89EB8432716C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Natsecure.SocialGuard.Plugin", "src/Natsecure.SocialGuard.Plugin\Natsecure.SocialGuard.Plugin.csproj", "{46A2D12A-76A0-4E51-955B-C72114D10DB3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,14 @@ Global
 		{BA3AB42C-6875-4F32-9476-89EB8432716C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BA3AB42C-6875-4F32-9476-89EB8432716C}.Release|x64.ActiveCfg = Release|Any CPU
 		{BA3AB42C-6875-4F32-9476-89EB8432716C}.Release|x64.Build.0 = Release|Any CPU
+		{46A2D12A-76A0-4E51-955B-C72114D10DB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46A2D12A-76A0-4E51-955B-C72114D10DB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46A2D12A-76A0-4E51-955B-C72114D10DB3}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{46A2D12A-76A0-4E51-955B-C72114D10DB3}.Debug|x64.Build.0 = Debug|Any CPU
+		{46A2D12A-76A0-4E51-955B-C72114D10DB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46A2D12A-76A0-4E51-955B-C72114D10DB3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{46A2D12A-76A0-4E51-955B-C72114D10DB3}.Release|x64.ActiveCfg = Release|Any CPU
+		{46A2D12A-76A0-4E51-955B-C72114D10DB3}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
