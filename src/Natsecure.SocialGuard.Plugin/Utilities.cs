@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Natsecure.SocialGuard.Plugin.Data.Config;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
@@ -15,6 +16,14 @@ namespace Natsecure.SocialGuard.Plugin
 			PropertyNamingPolicy = JsonNamingPolicy.CamelCase
 		};
 
-		internal static async Task<TData> ParseResponseFullAsync<TData>(HttpResponseMessage response) => JsonSerializer.Deserialize<TData>(await response.Content.ReadAsStringAsync(), SerializerOptions);
+		public static async Task<TData> ParseResponseFullAsync<TData>(HttpResponseMessage response) => JsonSerializer.Deserialize<TData>(await response.Content.ReadAsStringAsync(), SerializerOptions);
+	
+		public static IApiConfig PopulateApiConfig(this IApiConfig config)
+		{
+			config.ApiHost ??= "https://socialguard.natsecure.fr";
+			config.AccessKey ??= string.Empty;
+
+			return config;
+		}
 	}
 }

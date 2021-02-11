@@ -4,11 +4,6 @@ using MongoDB;
 using Natsecure.SocialGuard.Plugin.Data.Models;
 using Natsecure.SocialGuard.Plugin.Services;
 using Nodsoft.YumeChan.PluginBase.Tools.Data;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Natsecure.SocialGuard.Plugin.Modules
@@ -23,11 +18,26 @@ namespace Natsecure.SocialGuard.Plugin.Modules
 
 		}
 
-		[Command("lookup")]
-		public async Task LookupUser(ulong userId)
+		[Command("lookup"), Priority(10)]
+		public async Task LookupAsync(ulong userId)
 		{
 			IUser user = await Context.Client.GetUserAsync(userId);
+			await LookupAsync(user, userId);
+		}
 
+		[Command("lookup")]
+		public async Task LookupAsync(IUser user) => await LookupAsync(user, user.Id);
+
+
+		[Command("ban")]
+		public async Task BanUserAsync(IUser user)
+		{
+			
+		}
+
+
+		private async Task LookupAsync(IUser user, ulong userId)
+		{
 			TrustlistUser entry = await service.LookupUser(userId);
 			(Color color, string name, string desc) escalation = entry?.EscalationLevel switch
 			{

@@ -30,7 +30,7 @@ namespace Natsecure.SocialGuard.Plugin
 		{
 			coreClient = client;
 			HttpClientFactory = http;
-			ApiConfig = apiConfig.Configuration;
+			ApiConfig = apiConfig.InitConfig("api").PopulateApiConfig();
 			Logger = logger;
 		}
 
@@ -38,7 +38,7 @@ namespace Natsecure.SocialGuard.Plugin
 		{
 //			coreClient.UserJoined += GuildTrafficHandler.Instance.OnGuildUserJoined;
 			ApiService.Client ??= HttpClientFactory.CreateClient();
-			ApiService.Client.BaseAddress ??= new(ApiConfig?.ApiHost ?? "https://socialguard.natsecure.fr");
+			ApiService.Client.BaseAddress ??= new(ApiConfig?.ApiHost);
 
 			await base.LoadPlugin();
 
