@@ -11,12 +11,13 @@ namespace Natsecure.SocialGuard.Plugin.Modules
 	[Group("socialguard"), Alias("sg")]
 	public class UserLookupModule : ModuleBase<ICommandContext>
 	{
-		private readonly ApiService service = new();
+		private readonly ApiService service;
 
-		public UserLookupModule(IDatabaseProvider<PluginManifest> databaseProvider)
+		public UserLookupModule(ApiService service)
 		{
-
+			this.service = service;
 		}
+
 
 		[Command("lookup"), Priority(10)]
 		public async Task LookupAsync(ulong userId)

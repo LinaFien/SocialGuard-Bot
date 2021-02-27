@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <FinalOutput>$(BIN_PATH)\Modules\</FinalOutput>
     <Version>1.0</Version>
     <Authors>Sakura Isayeki</Authors>
     <Company>Natsecure</Company>
@@ -11,13 +10,11 @@
     <RepositoryType>Git</RepositoryType>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutDir>$(SolutionDir)build\Plugins</OutDir>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+  <PropertyGroup>
+    <OutDir>$(SolutionDir)\build\Plugins</OutDir>
+    <OutputPath>$(SolutionDir)\build\Plugins\</OutputPath>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <OutDir>$(SolutionDir)build\Plugins</OutDir>
-  </PropertyGroup>
+  
   <ItemGroup>
     <None Remove=".git" />
     <None Remove=".gitignore" />
@@ -26,8 +23,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Discord.Net" Version="2.2.0" />
-    <PackageReference Include="Discord.Net.Commands" Version="2.2.0" />
+    <PackageReference Include="Discord.Net" Version="2.3.0" />
+    <PackageReference Include="Discord.Net.Commands" Version="2.3.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
     <PackageReference Include="SourceLink.Create.CommandLine" Version="2.8.3">
       <PrivateAssets>all</PrivateAssets>

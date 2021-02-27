@@ -330,3 +330,5 @@ ASALocalRun/
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
 src/Nodsoft.YumeChan.NetRunner/Config/coreconfig.json
+
+src/Nodsoft.YumeChan.NetRunner/Config/Natsecure.SocialGuard.Plugin/api.json
