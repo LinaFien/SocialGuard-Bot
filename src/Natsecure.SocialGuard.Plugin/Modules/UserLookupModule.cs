@@ -1,9 +1,12 @@
 ﻿using Discord;
 using Discord.Commands;
+using Discord.WebSocket;
 using MongoDB;
 using Natsecure.SocialGuard.Plugin.Data.Models;
 using Natsecure.SocialGuard.Plugin.Services;
 using Nodsoft.YumeChan.PluginBase.Tools.Data;
+using System;
+using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 
 namespace Natsecure.SocialGuard.Plugin.Modules
@@ -11,6 +14,8 @@ namespace Natsecure.SocialGuard.Plugin.Modules
 	[Group("socialguard"), Alias("sg")]
 	public class UserLookupModule : ModuleBase<ICommandContext>
 	{
+		const string SignatureFooter = "Natsecure SocialGuard (YC) - Powered by Nodsoft Systems";
+
 		private readonly ApiService service;
 
 		public UserLookupModule(ApiService service)
@@ -29,17 +34,55 @@ namespace Natsecure.SocialGuard.Plugin.Modules
 		[Command("lookup")]
 		public async Task LookupAsync(IUser user) => await LookupAsync(user, user.Id);
 
-
-		[Command("ban")]
-		public async Task BanUserAsync(IUser user)
+		[Command("insert"), Alias("add")]
+		[RequireContext(ContextType.Guild), RequireUserPermission(GuildPermission.BanMembers), RequireBotPermission(GuildPermission.BanMembers)]
+		public async Task InsertUserAsync(IGuildUser user, [Range(0, 3)] byte level, [Remainder] string reason)
 		{
-			
-		}
+			if (user.Id == Context.User.Id)
+			{
+				await ReplyAsync($"{Context.User.Mention} You cannot insert yourself in the Trustlist.");
+			}
+			else if (user.IsBot)
+			{
+				await ReplyAsync($"{Context.User.Mention} You cannot insert a Bot in the Trustlist.");
+			}
+			else if (user.GuildPermissions.ManageGuild)
+			{
+				await ReplyAsync($"{Context.User.Mention} You cannot insert a server operator in the Trustlist. Demote them first.");
+			}
+			else if (reason.Length < 5)
+			{
+				await ReplyAsync($"{Context.User.Mention} Reason is too short");
+			}
 
+			else
+			{
+				try
+				{
+					await service.InsertOrEscalateUserAsync(new()
+					{
+						Id = user.Id,
+						EscalationLevel = level,
+						EscalationNote = reason
+					});
+
+					await ReplyAsync($"{Context.User.Mention} User '{user.Mention}' successfully inserted into Trustlist.");
+					await LookupAsync(user, user.Id);
+				}
+				catch (ApplicationException e)
+				{
+					await ReplyAsync($"{Context.User.Mention} {e.Message}");
+#if DEBUG
+					throw;
+#endif
+				}
+			}
+
+		}
 
 		private async Task LookupAsync(IUser user, ulong userId)
 		{
-			TrustlistUser entry = await service.LookupUser(userId);
+			TrustlistUser entry = await service.LookupUserAsync(userId);
 			(Color color, string name, string desc) escalation = entry?.EscalationLevel switch
 			{
 				null or 0 => (Color.Green, "Clear", "This user has no record, and is cleared safe."),
@@ -58,7 +101,7 @@ namespace Natsecure.SocialGuard.Plugin.Modules
 
 			builder.Color = escalation.color;
 			builder.Description = escalation.desc;
-			builder.Footer = new() { Text = $"Natsecure SocialGuard (YC) - Powered by Nodsoft Systems" };
+			builder.Footer = new() { Text = SignatureFooter };
 
 			if (entry is not null)
 			{

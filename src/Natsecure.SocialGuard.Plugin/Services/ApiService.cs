@@ -1,23 +1,29 @@
-﻿using Discord;
-using Microsoft.Extensions.Http;
-using Natsecure.SocialGuard.Plugin.Data.Config;
+﻿using Natsecure.SocialGuard.Plugin.Data.Config;
 using Natsecure.SocialGuard.Plugin.Data.Models;
 using Nodsoft.YumeChan.PluginBase.Tools;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
+
+
 
 namespace Natsecure.SocialGuard.Plugin.Services
 {
 	public class ApiService
 	{
 		private const string AccessKeyName = "Access-Key";
+		private const string JsonMimeType = "application/json";
 
 		private readonly HttpClient client;
+		private static readonly JsonSerializerOptions serializerOptions = new()
+		{
+			PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+		};
+
 
 		public ApiService(IHttpClientFactory factory, IConfigProvider<IApiConfig> config)
 		{
@@ -26,7 +32,7 @@ namespace Natsecure.SocialGuard.Plugin.Services
 			client.DefaultRequestHeaders.Add(AccessKeyName, config.Configuration.AccessKey);
 		}
 
-		public async Task<TrustlistUser> LookupUser(ulong userId)
+		public async Task<TrustlistUser> LookupUserAsync(ulong userId)
 		{
 			HttpRequestMessage request = new(HttpMethod.Get, $"/api/user/{userId}");
 			HttpResponseMessage response = await client.SendAsync(request);
@@ -36,12 +42,27 @@ namespace Natsecure.SocialGuard.Plugin.Services
 				: await Utilities.ParseResponseFullAsync<TrustlistUser>(response);
 		}
 
-		public async Task<TrustlistUser> ListKnownUsers()
+		public async Task<TrustlistUser> ListKnownUsersAsync()
 		{
-			HttpRequestMessage request = new(HttpMethod.Get, $"/api/user/list");
+			HttpRequestMessage request = new(HttpMethod.Get, "/api/user/list");
 			HttpResponseMessage response = await client.SendAsync(request);
 
 			return await Utilities.ParseResponseFullAsync<TrustlistUser>(response);
+		}
+
+		public async Task InsertOrEscalateUserAsync(TrustlistUser user)
+		{
+			using HttpRequestMessage request = new(await LookupUserAsync(user.Id) is null ? HttpMethod.Post : HttpMethod.Put, "/api/user/")
+			{
+				Content = new StringContent(JsonSerializer.Serialize(user, serializerOptions), Encoding.UTF8, JsonMimeType)
+			};
+
+			using HttpResponseMessage response = await client.SendAsync(request);
+
+			if (!response.IsSuccessStatusCode)
+			{
+				throw new ApplicationException($"API returned {response.StatusCode}.");
+			}
 		}
 	}
 }
