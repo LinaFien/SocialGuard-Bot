@@ -6,12 +6,15 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nodsoft.YumeChan.ConsoleRunner", "src\Nodsoft.YumeChan.ConsoleRunner\Nodsoft.YumeChan.ConsoleRunner.csproj", "{B4E6E6B5-B495-4668-BB0D-1107B457C420}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nodsoft.YumeChan.Core", "src\Nodsoft.YumeChan.Core\Nodsoft.YumeChan.Core.csproj", "{58155AE6-D0DF-45E3-9B38-64ED0ACA8AC0}"
+	ProjectSection(ProjectDependencies) = postProject
+		{46A2D12A-76A0-4E51-955B-C72114D10DB3} = {46A2D12A-76A0-4E51-955B-C72114D10DB3}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nodsoft.YumeChan.NetRunner", "src\Nodsoft.YumeChan.NetRunner\Nodsoft.YumeChan.NetRunner.csproj", "{AD328D2F-1AD0-414A-96A0-456820765C37}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nodsoft.YumeChan.PluginBase", "src\Nodsoft.YumeChan.PluginBase\Nodsoft.YumeChan.PluginBase.csproj", "{BA3AB42C-6875-4F32-9476-89EB8432716C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Natsecure.SocialGuard.Plugin", "src/Natsecure.SocialGuard.Plugin\Natsecure.SocialGuard.Plugin.csproj", "{46A2D12A-76A0-4E51-955B-C72114D10DB3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Natsecure.SocialGuard.Plugin", "src\Natsecure.SocialGuard.Plugin\Natsecure.SocialGuard.Plugin.csproj", "{46A2D12A-76A0-4E51-955B-C72114D10DB3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
