@@ -18,85 +18,86 @@ namespace Natsecure.SocialGuard.Plugin.Modules
 		public GuildConfigModule(IDatabaseProvider<PluginManifest> database)
 		{
 			repository = database.GetEntityRepository<GuildConfig, ulong>();
-			
 		}
+
 
 		[Command("joinlog"), RequireUserPermission(GuildPermission.ManageGuild)]
-		public async Task ConfigureJoinLogAsync(ITextChannel channel = null)
+		public async Task GetJoinLogAsync()
 		{
 			GuildConfig config = await FindOrCreateConfigAsync();
-			
-			if (channel is null)
-			{
-				ITextChannel current = Context.Guild.GetTextChannel(config.JoinLogChannel);
-				await ReplyAsync($"Current Join Log channel : {current?.Mention ?? "None"}.");
-			}
-			else
-			{
-				config.JoinLogChannel = channel.Id;
-				await repository.ReplaceOneAsync(config);
-				await ReplyAsync($"Join Log channel set to : {Context.Guild.GetTextChannel(config.JoinLogChannel).Mention}.");
-			}
+			ITextChannel current = Context.Guild.GetTextChannel(config.JoinLogChannel);
+			await ReplyAsync($"Current Join Log channel : {current?.Mention ?? "None"}.");
 		}
 
-		[Command("banlog"), RequireUserPermission(GuildPermission.ManageGuild)]
-		public async Task ConfigureBanLogAsync(ITextChannel channel = null)
+		[Command("joinlog"), Priority(10), RequireUserPermission(GuildPermission.ManageGuild)]
+		public async Task SetJoinLogAsync(ITextChannel channel)
 		{
 			GuildConfig config = await FindOrCreateConfigAsync();
+			config.JoinLogChannel = channel.Id;
+			await repository.ReplaceOneAsync(config);
+			await ReplyAsync($"Join Log channel set to : {Context.Guild.GetTextChannel(config.JoinLogChannel).Mention}.");
+		}
 
-			if (channel is null)
-			{
-				ITextChannel current = Context.Guild.GetTextChannel(config.BanLogChannel);
-				await ReplyAsync($"Current Ban Log channel : {current?.Mention ?? "None"}.");
-			}
-			else
-			{
-				config.BanLogChannel = channel.Id;
-				await repository.ReplaceOneAsync(config);
-				await ReplyAsync($"Join Ban channel set to : {Context.Guild.GetTextChannel(config.BanLogChannel).Mention}.");
-			}
+
+		[Command("banlog"), RequireUserPermission(GuildPermission.ManageGuild)]
+		public async Task GetBanLogAsync()
+		{
+			GuildConfig config = await FindOrCreateConfigAsync();
+			ITextChannel current = Context.Guild.GetTextChannel(config.BanLogChannel);
+			await ReplyAsync($"Current Ban Log channel : {current?.Mention ?? "None"}.");
+		}
+
+		[Command("banlog"), Priority(10), RequireUserPermission(GuildPermission.ManageGuild)]
+		public async Task SetBanLogAsync(ITextChannel channel)
+		{
+			GuildConfig config = await FindOrCreateConfigAsync();
+			config.BanLogChannel = channel.Id;
+			await repository.ReplaceOneAsync(config);
+			await ReplyAsync($"Join Ban channel set to : {Context.Guild.GetTextChannel(config.BanLogChannel).Mention}.");
 		}
 
 		[Command("accesskey"), RequireUserPermission(GuildPermission.ManageGuild)]
-		public async Task ConfigureAccessKeyAsync(string key = null)
+		public async Task ConfigureAccessKeyAsync()
 		{
 			GuildConfig config = await FindOrCreateConfigAsync();
+			await ReplyAsync(config.WriteAccessKey is null ? "No Access key has been set for this guild." : "Access Key has already been set.");
+		}
 
-			if (key is null)
-			{
-				await ReplyAsync(config.WriteAccessKey is null ? "No Access key has been set for this guild." : "Access Key has already been set.");
-			}
-			else
-			{
-				await Context.Message.DeleteAsync();
-				config.WriteAccessKey = key;
-				await repository.ReplaceOneAsync(config);
-				await ReplyAsync($"Access key has been set.");
-			}
+
+		[Command("accesskey"), Priority(10), RequireUserPermission(GuildPermission.ManageGuild)]
+		public async Task ConfigureAccessKeyAsync(string key)
+		{
+			await Context.Message.DeleteAsync();
+
+			GuildConfig config = await FindOrCreateConfigAsync();
+			config.WriteAccessKey = key;
+			await repository.ReplaceOneAsync(config);
+			await ReplyAsync($"Access key has been set.");
 		}
 
 		[Command("autobanblacklisted"), Alias("autoban"), RequireUserPermission(GuildPermission.ManageGuild), RequireBotPermission(GuildPermission.ManageGuild)]
-		public async Task ConfigureBanLogAsync(string key = null)
+		public async Task ConfigureBanLogAsync()
+		{
+			GuildConfig config = await FindOrCreateConfigAsync();
+			await ReplyAsync($"Auto-ban Blacklist is {(config.AutoBanBlacklisted ? "on" : "off")}.");
+		}
+
+		[Command("autobanblacklisted"), Alias("autoban"), Priority(10), RequireUserPermission(GuildPermission.ManageGuild), RequireBotPermission(GuildPermission.ManageGuild)]
+		public async Task ConfigureBanLogAsync(string key)
 		{
 			GuildConfig config = await FindOrCreateConfigAsync();
 
-			if (key is null)
+			config.AutoBanBlacklisted = key.ToLowerInvariant() switch
 			{
-				await ReplyAsync($"Auto-ban Blacklist is {(config.AutoBanBlacklisted ? "on" : "off")}.");
-			}
-			else
-			{
-				config.AutoBanBlacklisted = key.ToLowerInvariant() switch
-				{
-					"true" or "yes" or "on" or "1" => true,
-					"false" or "no" or "off" or "0" => false,
-					_ => config.AutoBanBlacklisted
-				};
+				"true" or "yes" or "on" or "1" => true,
+				"false" or "no" or "off" or "0" => false,
+				_ => config.AutoBanBlacklisted
+			};
 
-				await repository.ReplaceOneAsync(config);
-				await ReplyAsync($"Auto-ban Blacklist has been turned {(config.AutoBanBlacklisted ? "on" : "off")}.");
-			}
+			await repository.ReplaceOneAsync(config);
+			await ReplyAsync($"Auto-ban Blacklist has been turned {(config.AutoBanBlacklisted ? "on" : "off")}.");
 		}
+
 
 		private async Task<GuildConfig> FindOrCreateConfigAsync()
 		{
