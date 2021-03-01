@@ -1,4 +1,4 @@
-using Discord;
+﻿using Discord;
 using Discord.WebSocket;
 using Natsecure.SocialGuard.Plugin.Data.Config;
 using Natsecure.SocialGuard.Plugin.Data.Models;
@@ -14,7 +14,6 @@ namespace Natsecure.SocialGuard.Plugin
 {
 	public class GuildTrafficHandler
 	{
-
 		private readonly ApiService apiService;
 		private readonly IEntityRepository<GuildConfig, ulong> configRepository;
 
@@ -38,7 +37,7 @@ namespace Natsecure.SocialGuard.Plugin
 
 				await joinLog.SendMessageAsync($"User **{user}** ({user.Mention}) has joined the server.", embed: entryEmbed);
 
-				if (entry.EscalationLevel <= 3 && config.AutoBanBlacklisted)
+				if (entry?.EscalationLevel >= 3 && config.AutoBanBlacklisted)
 				{
 					await user.BanAsync(0, $"[SocialGuard] \n{entry.EscalationNote}");
 
