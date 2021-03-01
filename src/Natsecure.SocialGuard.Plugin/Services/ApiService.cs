@@ -29,7 +29,6 @@ namespace Natsecure.SocialGuard.Plugin.Services
 		{
 			client = factory.CreateClient(nameof(PluginManifest));
 			client.BaseAddress = new(config.Configuration.ApiHost);
-			client.DefaultRequestHeaders.Add(AccessKeyName, config.Configuration.AccessKey);
 		}
 
 		public async Task<TrustlistUser> LookupUserAsync(ulong userId)
@@ -50,12 +49,11 @@ namespace Natsecure.SocialGuard.Plugin.Services
 			return await Utilities.ParseResponseFullAsync<TrustlistUser>(response);
 		}
 
-		public async Task InsertOrEscalateUserAsync(TrustlistUser user)
+		public async Task InsertOrEscalateUserAsync(TrustlistUser user, string accessKey)
 		{
-			using HttpRequestMessage request = new(await LookupUserAsync(user.Id) is null ? HttpMethod.Post : HttpMethod.Put, "/api/user/")
-			{
-				Content = new StringContent(JsonSerializer.Serialize(user, serializerOptions), Encoding.UTF8, JsonMimeType)
-			};
+			using HttpRequestMessage request = new(await LookupUserAsync(user.Id) is null ? HttpMethod.Post : HttpMethod.Put, "/api/user/");
+			request.Content = new StringContent(JsonSerializer.Serialize(user, serializerOptions), Encoding.UTF8, JsonMimeType);
+			request.Headers.Add(AccessKeyName, accessKey);
 
 			using HttpResponseMessage response = await client.SendAsync(request);
 

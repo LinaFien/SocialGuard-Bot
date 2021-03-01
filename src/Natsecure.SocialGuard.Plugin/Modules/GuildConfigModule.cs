@@ -2,10 +2,6 @@
 using Discord.Commands;
 using Natsecure.SocialGuard.Plugin.Data.Config;
 using Nodsoft.YumeChan.PluginBase.Tools.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Natsecure.SocialGuard.Plugin.Modules

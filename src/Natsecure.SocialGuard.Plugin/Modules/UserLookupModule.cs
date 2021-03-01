@@ -1,7 +1,6 @@
 ﻿using Discord;
 using Discord.Commands;
-using Discord.WebSocket;
-using MongoDB;
+using Natsecure.SocialGuard.Plugin.Data.Config;
 using Natsecure.SocialGuard.Plugin.Data.Models;
 using Natsecure.SocialGuard.Plugin.Services;
 using Nodsoft.YumeChan.PluginBase.Tools.Data;
@@ -17,10 +16,12 @@ namespace Natsecure.SocialGuard.Plugin.Modules
 		const string SignatureFooter = "Natsecure SocialGuard (YC) - Powered by Nodsoft Systems";
 
 		private readonly ApiService service;
+		private readonly IEntityRepository<GuildConfig, ulong> repository;
 
-		public UserLookupModule(ApiService service)
+		public UserLookupModule(ApiService service, IDatabaseProvider<PluginManifest> databaseProvider)
 		{
 			this.service = service;
+			repository = databaseProvider.GetEntityRepository<GuildConfig, ulong>();
 		}
 
 
@@ -59,15 +60,22 @@ namespace Natsecure.SocialGuard.Plugin.Modules
 			{
 				try
 				{
-					await service.InsertOrEscalateUserAsync(new()
+					if ((await FindOrCreateConfigAsync()).WriteAccessKey is string key and not null)
 					{
-						Id = user.Id,
-						EscalationLevel = level,
-						EscalationNote = reason
-					});
+						await service.InsertOrEscalateUserAsync(new()
+						{
+							Id = user.Id,
+							EscalationLevel = level,
+							EscalationNote = reason
+						}, key);
 
-					await ReplyAsync($"{Context.User.Mention} User '{user.Mention}' successfully inserted into Trustlist.");
-					await LookupAsync(user, user.Id);
+						await ReplyAsync($"{Context.User.Mention} User '{user.Mention}' successfully inserted into Trustlist.");
+						await LookupAsync(user, user.Id);
+					}
+					else
+					{
+						await ReplyAsync($"{Context.User.Mention} No Access Key set. Use ``sg config accesskey <key>`` to set an Access Key.");
+					}
 				}
 				catch (ApplicationException e)
 				{
@@ -77,41 +85,61 @@ namespace Natsecure.SocialGuard.Plugin.Modules
 #endif
 				}
 			}
-
 		}
 
-		private async Task LookupAsync(IUser user, ulong userId)
+		public async Task LookupAsync(IUser user, ulong userId, bool silenceOnClear = false)
 		{
 			TrustlistUser entry = await service.LookupUserAsync(userId);
-			(Color color, string name, string desc) escalation = entry?.EscalationLevel switch
+
+			if (!silenceOnClear || entry.EscalationLevel is not 0)
+			{
+				await ReplyAsync(Context.User.Mention, embed: BuildUserRecordEmbed(entry, user, userId));
+			}
+		}
+
+		internal static Embed BuildUserRecordEmbed(TrustlistUser trustlistUser, IUser discordUser, ulong userId)
+		{
+			(Color color, string name, string desc) = trustlistUser?.EscalationLevel switch
 			{
 				null or 0 => (Color.Green, "Clear", "This user has no record, and is cleared safe."),
 				1 => (Color.Blue, "Suspicious", "This user is marked as suspicious. Their behaviour should be monitored."),
-				2 => (Color.DarkOrange, "Untrusted", "This user is marked as untrusted. Please exerce caution when interacting with them."),
+				2 => (Color.Orange, "Untrusted", "This user is marked as untrusted. Please exerce caution when interacting with them."),
 				>= 3 => (Color.Red, "Blacklisted", "This user is dangerous and has been blacklisted. Banning this user is greatly advised.")
 			};
 
 			EmbedBuilder builder = new();
-			builder.WithTitle($"Trustlist User : {user?.Username ?? userId.ToString()}");
+			builder.WithTitle($"Trustlist User : {discordUser?.Username ?? userId.ToString()}");
 
-			if (user is not null)
+			if (discordUser is not null)
 			{
-				builder.AddField("ID", $"``{user?.Id}``", true);
+				builder.AddField("ID", $"``{discordUser?.Id}``", true);
 			}
 
-			builder.Color = escalation.color;
-			builder.Description = escalation.desc;
+			builder.Color = color;
+			builder.Description = desc;
 			builder.Footer = new() { Text = SignatureFooter };
 
-			if (entry is not null)
+			if (trustlistUser is not null)
 			{
-				builder.AddField("Escalation Level", $"{entry.EscalationLevel} - {escalation.name}");
-				builder.AddField("First Entered", entry.EntryAt.ToString(), true);
-				builder.AddField("Last Escalation", entry.LastEscalated.ToString(), true);
-				builder.AddField("Escalation Reason", entry.EscalationNote);
+				builder.AddField("Escalation Level", $"{trustlistUser.EscalationLevel} - {name}");
+				builder.AddField("First Entered", trustlistUser.EntryAt.ToString(), true);
+				builder.AddField("Last Escalation", trustlistUser.LastEscalated.ToString(), true);
+				builder.AddField("Escalation Reason", trustlistUser.EscalationNote);
 			}
 
-			await ReplyAsync(Context.User.Mention, embed: builder.Build());
+			return builder.Build();
+		}
+
+		private async Task<GuildConfig> FindOrCreateConfigAsync()
+		{
+			GuildConfig config = await repository.FindByIdAsync(Context.Guild.Id);
+
+			if (config is null)
+			{
+				await repository.InsertOneAsync(config = new() { Id = Context.Guild.Id });
+			}
+
+			return config;
 		}
 	}
 }
