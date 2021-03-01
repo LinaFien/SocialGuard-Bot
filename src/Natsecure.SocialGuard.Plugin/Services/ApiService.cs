@@ -1,4 +1,4 @@
-﻿using Natsecure.SocialGuard.Plugin.Data.Config;
+using Natsecure.SocialGuard.Plugin.Data.Config;
 using Natsecure.SocialGuard.Plugin.Data.Models;
 using Nodsoft.YumeChan.PluginBase.Tools;
 using System;
@@ -24,11 +24,11 @@ namespace Natsecure.SocialGuard.Plugin.Services
 			PropertyNamingPolicy = JsonNamingPolicy.CamelCase
 		};
 
-
+		public ApiService(IHttpClientFactory factory, IApiConfig config)
 		public ApiService(IHttpClientFactory factory, IConfigProvider<IApiConfig> config)
 		{
 			client = factory.CreateClient(nameof(PluginManifest));
-			client.BaseAddress = new(config.Configuration.ApiHost);
+			client.BaseAddress = new(config.ApiHost);
 		}
 
 		public async Task<TrustlistUser> LookupUserAsync(ulong userId)

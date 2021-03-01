@@ -13,8 +13,6 @@ namespace Natsecure.SocialGuard.Plugin.Modules
 	[Group("socialguard"), Alias("sg")]
 	public class UserLookupModule : ModuleBase<ICommandContext>
 	{
-		const string SignatureFooter = "Natsecure SocialGuard (YC) - Powered by Nodsoft Systems";
-
 		private readonly ApiService service;
 		private readonly IEntityRepository<GuildConfig, ulong> repository;
 
@@ -60,7 +58,7 @@ namespace Natsecure.SocialGuard.Plugin.Modules
 			{
 				try
 				{
-					if ((await FindOrCreateConfigAsync()).WriteAccessKey is string key and not null)
+					if ((await repository.FindOrCreateConfigAsync(Context.Guild.Id)).WriteAccessKey is string key and not null)
 					{
 						await service.InsertOrEscalateUserAsync(new()
 						{
@@ -93,53 +91,8 @@ namespace Natsecure.SocialGuard.Plugin.Modules
 
 			if (!silenceOnClear || entry.EscalationLevel is not 0)
 			{
-				await ReplyAsync(Context.User.Mention, embed: BuildUserRecordEmbed(entry, user, userId));
+				await ReplyAsync(Context.User.Mention, embed: Utilities.BuildUserRecordEmbed(entry, user, userId));
 			}
-		}
-
-		internal static Embed BuildUserRecordEmbed(TrustlistUser trustlistUser, IUser discordUser, ulong userId)
-		{
-			(Color color, string name, string desc) = trustlistUser?.EscalationLevel switch
-			{
-				null or 0 => (Color.Green, "Clear", "This user has no record, and is cleared safe."),
-				1 => (Color.Blue, "Suspicious", "This user is marked as suspicious. Their behaviour should be monitored."),
-				2 => (Color.Orange, "Untrusted", "This user is marked as untrusted. Please exerce caution when interacting with them."),
-				>= 3 => (Color.Red, "Blacklisted", "This user is dangerous and has been blacklisted. Banning this user is greatly advised.")
-			};
-
-			EmbedBuilder builder = new();
-			builder.WithTitle($"Trustlist User : {discordUser?.Username ?? userId.ToString()}");
-
-			if (discordUser is not null)
-			{
-				builder.AddField("ID", $"``{discordUser?.Id}``", true);
-			}
-
-			builder.Color = color;
-			builder.Description = desc;
-			builder.Footer = new() { Text = SignatureFooter };
-
-			if (trustlistUser is not null)
-			{
-				builder.AddField("Escalation Level", $"{trustlistUser.EscalationLevel} - {name}");
-				builder.AddField("First Entered", trustlistUser.EntryAt.ToString(), true);
-				builder.AddField("Last Escalation", trustlistUser.LastEscalated.ToString(), true);
-				builder.AddField("Escalation Reason", trustlistUser.EscalationNote);
-			}
-
-			return builder.Build();
-		}
-
-		private async Task<GuildConfig> FindOrCreateConfigAsync()
-		{
-			GuildConfig config = await repository.FindByIdAsync(Context.Guild.Id);
-
-			if (config is null)
-			{
-				await repository.InsertOneAsync(config = new() { Id = Context.Guild.Id });
-			}
-
-			return config;
 		}
 	}
 }
