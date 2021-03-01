@@ -26,7 +26,7 @@ namespace Natsecure.SocialGuard.Plugin.Services
 		public ApiService(IHttpClientFactory factory, IConfigProvider<IApiConfig> config)
 		{
 			client = factory.CreateClient(nameof(PluginManifest));
-			client.BaseAddress = new(config.InitConfig(PluginManifest.ApiConfigFileName).ApiHost);
+			client.BaseAddress = new(config.InitConfig(PluginManifest.ApiConfigFileName).PopulateApiConfig().ApiHost);
 		}
 
 		public async Task<TrustlistUser> LookupUserAsync(ulong userId)
