@@ -1,4 +1,4 @@
-﻿using Discord;
+using Discord;
 using Discord.Commands;
 using Natsecure.SocialGuard.Plugin.Data.Config;
 using Natsecure.SocialGuard.Plugin.Data.Models;
@@ -33,21 +33,31 @@ namespace Natsecure.SocialGuard.Plugin.Modules
 		[Command("lookup")]
 		public async Task LookupAsync(IUser user) => await LookupAsync(user, user.Id);
 
-		[Command("insert"), Alias("add")]
-		[RequireContext(ContextType.Guild), RequireUserPermission(GuildPermission.BanMembers), RequireBotPermission(GuildPermission.BanMembers)]
-		public async Task InsertUserAsync(IGuildUser user, [Range(0, 3)] byte level, [Remainder] string reason)
+		[Command("insert"), Alias("add"), Priority(10), RequireContext(ContextType.Guild), RequireUserPermission(GuildPermission.BanMembers)]
+		public async Task InsertUserAsync(ulong userId, [Range(0, 3)] byte level, [Remainder] string reason)
 		{
-			if (user.Id == Context.User.Id)
+			await InsertUserAsync(await Context.Guild.GetUserAsync(userId), userId, level, reason);
+		}
+
+		[Command("insert"), Alias("add"), RequireContext(ContextType.Guild), RequireUserPermission(GuildPermission.BanMembers)]
+		public async Task InsertUserAsync(IGuildUser user, [Range(0, 3)] byte level, [Remainder] string reason) => await InsertUserAsync(user, user.Id, level, reason);
+
+		private async Task InsertUserAsync(IGuildUser user, ulong userId, byte level, string reason, bool banUser = false)
+		{
+			if (user is not null)
 			{
-				await ReplyAsync($"{Context.User.Mention} You cannot insert yourself in the Trustlist.");
-			}
-			else if (user.IsBot)
-			{
-				await ReplyAsync($"{Context.User.Mention} You cannot insert a Bot in the Trustlist.");
-			}
-			else if (user.GuildPermissions.ManageGuild)
-			{
-				await ReplyAsync($"{Context.User.Mention} You cannot insert a server operator in the Trustlist. Demote them first.");
+				if (user?.Id == Context.User.Id)
+				{
+					await ReplyAsync($"{Context.User.Mention} You cannot insert yourself in the Trustlist.");
+				}
+				else if (user.IsBot)
+				{
+					await ReplyAsync($"{Context.User.Mention} You cannot insert a Bot in the Trustlist.");
+				}
+				else if (user.GuildPermissions.ManageGuild)
+				{
+					await ReplyAsync($"{Context.User.Mention} You cannot insert a server operator in the Trustlist. Demote them first.");
+				}
 			}
 			else if (reason.Length < 5)
 			{
@@ -58,17 +68,25 @@ namespace Natsecure.SocialGuard.Plugin.Modules
 			{
 				try
 				{
-					if ((await repository.FindOrCreateConfigAsync(Context.Guild.Id)).WriteAccessKey is string key and not null)
+					GuildConfig config = await repository.FindOrCreateConfigAsync(Context.Guild.Id);
+
+					if (config.WriteAccessKey is string key and not null)
 					{
 						await service.InsertOrEscalateUserAsync(new()
 						{
-							Id = user.Id,
+							Id = userId,
 							EscalationLevel = level,
 							EscalationNote = reason
 						}, key);
 
-						await ReplyAsync($"{Context.User.Mention} User '{user.Mention}' successfully inserted into Trustlist.");
-						await LookupAsync(user, user.Id);
+						await ReplyAsync($"{Context.User.Mention} User '{user?.Mention ?? userId.ToString()}' successfully inserted into Trustlist.");
+						await LookupAsync(user, userId);
+
+						if (banUser || (config.AutoBanBlacklisted && level >= 3))
+						{
+							await user.BanAsync(0, $"[SocialGuard] {reason}");
+							await (await Context.Guild.GetTextChannelAsync(config.BanLogChannel)).SendMessageAsync($"Banned user '{user}'.");
+						}
 					}
 					else
 					{
@@ -84,6 +102,9 @@ namespace Natsecure.SocialGuard.Plugin.Modules
 				}
 			}
 		}
+
+		[Command("ban"), RequireContext(ContextType.Guild), RequireUserPermission(GuildPermission.BanMembers), RequireBotPermission(GuildPermission.BanMembers)]
+		public async Task BanUserAsync(IGuildUser user, [Range(0, 3)] byte level, [Remainder] string reason) => await InsertUserAsync(user, user.Id, level, reason, true);
 
 		public async Task LookupAsync(IUser user, ulong userId, bool silenceOnClear = false)
 		{

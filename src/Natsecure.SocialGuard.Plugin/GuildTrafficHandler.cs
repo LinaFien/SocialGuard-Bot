@@ -4,10 +4,6 @@ using Natsecure.SocialGuard.Plugin.Data.Config;
 using Natsecure.SocialGuard.Plugin.Data.Models;
 using Natsecure.SocialGuard.Plugin.Services;
 using Nodsoft.YumeChan.PluginBase.Tools.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Natsecure.SocialGuard.Plugin
@@ -38,7 +34,7 @@ namespace Natsecure.SocialGuard.Plugin
 				await joinLog.SendMessageAsync($"User **{user}** ({user.Mention}) has joined the server.", embed: entryEmbed);
 
 				if (entry?.EscalationLevel >= 3 && config.AutoBanBlacklisted)
-				{
+				{				
 					await user.BanAsync(0, $"[SocialGuard] \n{entry.EscalationNote}");
 
 					await user.Guild.GetTextChannel(config.BanLogChannel is not 0 ? config.BanLogChannel : config.JoinLogChannel)

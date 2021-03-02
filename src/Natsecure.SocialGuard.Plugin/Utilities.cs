@@ -1,15 +1,12 @@
 ﻿using Discord;
 using Natsecure.SocialGuard.Plugin.Data.Config;
 using Natsecure.SocialGuard.Plugin.Data.Models;
-using Natsecure.SocialGuard.Plugin.Services;
 using Nodsoft.YumeChan.PluginBase.Tools.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+
+
 
 namespace Natsecure.SocialGuard.Plugin
 {
